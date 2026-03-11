@@ -7,6 +7,7 @@ ADMIN_ID = 8376476787
 bot = telebot.TeleBot(TOKEN)
 
 users = {}
+support_map = {}
 
 start_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 start_keyboard.add(KeyboardButton("Регистрация"))
@@ -110,6 +111,7 @@ def handle(message):
         bot.send_message(
             ADMIN_ID,
             f"🛒 Новый заказ\n\n"
+            f"UserID: {message.chat.id}\n"
             f"👤 {users[message.chat.id]['name']}\n"
             f"📍 {users[message.chat.id]['address']}\n"
             f"📞 {users[message.chat.id]['phone']}\n\n"
@@ -149,6 +151,8 @@ def handle(message):
 
     elif step == "support":
 
+        support_map[message.chat.id] = True
+
         bot.send_message(
             message.chat.id,
             "✅ Ваш вопрос отправлен. Оператор скоро ответит."
@@ -156,13 +160,41 @@ def handle(message):
 
         bot.send_message(
             ADMIN_ID,
-            f"💬 Новый вопрос в поддержку\n\n"
+            f"💬 Новый вопрос\n\n"
+            f"UserID: {message.chat.id}\n"
             f"👤 {users[message.chat.id]['name']}\n"
             f"📞 {users[message.chat.id]['phone']}\n\n"
-            f"❓ Вопрос:\n{message.text}"
+            f"❓ {message.text}"
         )
 
         users[message.chat.id]["step"] = "menu"
 
+
+@bot.message_handler(commands=['reply'])
+def reply_user(message):
+
+    if message.chat.id != ADMIN_ID:
+        return
+
+    try:
+        data = message.text.split(" ", 2)
+        user_id = int(data[1])
+        text = data[2]
+
+        bot.send_message(
+            user_id,
+            f"💬 Ответ оператора:\n\n{text}"
+        )
+
+        bot.send_message(
+            ADMIN_ID,
+            "✅ Ответ отправлен."
+        )
+
+    except:
+        bot.send_message(
+            ADMIN_ID,
+            "❌ Формат:\n/reply USER_ID текст"
+        )
 
 bot.infinity_polling()
