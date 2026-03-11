@@ -7,7 +7,6 @@ ADMIN_ID = 8376476787
 bot = telebot.TeleBot(TOKEN)
 
 users = {}
-support_map = {}
 
 start_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 start_keyboard.add(KeyboardButton("Регистрация"))
@@ -110,12 +109,12 @@ def handle(message):
 
         bot.send_message(
             ADMIN_ID,
-            f"🛒 Новый заказ\n\n"
+            f"📦 Новый заказ\n\n"
             f"UserID: {message.chat.id}\n"
             f"👤 {users[message.chat.id]['name']}\n"
             f"📍 {users[message.chat.id]['address']}\n"
             f"📞 {users[message.chat.id]['phone']}\n\n"
-            f"📦 Заказ:\n{message.text}"
+            f"Заказ:\n{message.text}"
         )
 
     elif message.text == "📋 Мои заказы":
@@ -151,8 +150,6 @@ def handle(message):
 
     elif step == "support":
 
-        support_map[message.chat.id] = True
-
         bot.send_message(
             message.chat.id,
             "✅ Ваш вопрос отправлен. Оператор скоро ответит."
@@ -170,31 +167,25 @@ def handle(message):
         users[message.chat.id]["step"] = "menu"
 
 
-@bot.message_handler(commands=['reply'])
-def reply_user(message):
+@bot.message_handler(func=lambda message: message.chat.id == ADMIN_ID)
+def admin_reply(message):
 
-    if message.chat.id != ADMIN_ID:
-        return
+    if message.reply_to_message:
 
-    try:
-        data = message.text.split(" ", 2)
-        user_id = int(data[1])
-        text = data[2]
+        text = message.reply_to_message.text
 
-        bot.send_message(
-            user_id,
-            f"💬 Ответ оператора:\n\n{text}"
-        )
+        if "UserID:" in text:
 
-        bot.send_message(
-            ADMIN_ID,
-            "✅ Ответ отправлен."
-        )
+            user_id = int(text.split("UserID:")[1].split("\n")[0])
 
-    except:
-        bot.send_message(
-            ADMIN_ID,
-            "❌ Формат:\n/reply USER_ID текст"
-        )
+            bot.send_message(
+                user_id,
+                f"💬 Ответ оператора:\n\n{message.text}"
+            )
+
+            bot.send_message(
+                ADMIN_ID,
+                "✅ Ответ отправлен клиенту."
+            )
 
 bot.infinity_polling()
