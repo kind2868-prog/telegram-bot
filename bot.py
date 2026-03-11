@@ -25,25 +25,46 @@ def start(message):
 
     bot.send_message(
         message.chat.id,
-        "Здравствуйте! 👋\n"
+        "Здравствуйте 👋\n"
         "Добро пожаловать в наш магазин 📦\n\n"
-        "👇 Нажмите кнопку для регистрации",
+        "Нажмите кнопку для регистрации",
         reply_markup=start_keyboard
     )
 
 @bot.message_handler(func=lambda message: message.text == "Регистрация")
-def reg(message):
+def register(message):
 
     users[message.chat.id] = {"step": "name", "orders": []}
 
     bot.send_message(
         message.chat.id,
-        "⚠️ Лутфан, насаб ва номро бо фосила ворид кунед.\n"
-        "Намуна: Смит Ҷон"
+        "Введите имя и фамилию\n"
+        "Пример: Рома Смит"
     )
 
 @bot.message_handler(func=lambda message: True)
 def handle(message):
+
+    if message.chat.id == ADMIN_ID:
+
+        parts = message.text.split(" ", 1)
+
+        if len(parts) == 2 and parts[0].isdigit():
+
+            user_id = int(parts[0])
+            text = parts[1]
+
+            bot.send_message(
+                user_id,
+                f"💬 Ответ оператора:\n\n{text}"
+            )
+
+            bot.send_message(
+                ADMIN_ID,
+                "✅ Сообщение отправлено клиенту"
+            )
+
+        return
 
     user = users.get(message.chat.id)
 
@@ -59,12 +80,7 @@ def handle(message):
 
         bot.send_message(
             message.chat.id,
-            f"✅ Насаб ва Номи шумо сабт карда шуд: {message.text}"
-        )
-
-        bot.send_message(
-            message.chat.id,
-            "📍 Лутфан суроғаи худро ворид кунед:"
+            "Введите адрес 📍"
         )
 
     elif step == "address":
@@ -74,7 +90,7 @@ def handle(message):
 
         bot.send_message(
             message.chat.id,
-            "⚠️ Лутфан номери телефони худро ворид кунед:"
+            "Введите номер телефона 📞"
         )
 
     elif step == "phone":
@@ -84,7 +100,7 @@ def handle(message):
 
         bot.send_message(
             message.chat.id,
-            "✅ Номери шумо сабт карда шуд",
+            "Регистрация завершена ✅",
             reply_markup=menu_keyboard
         )
 
@@ -94,7 +110,7 @@ def handle(message):
 
         bot.send_message(
             message.chat.id,
-            "✏️ Напишите ваш заказ:"
+            "Напишите ваш заказ ✏️"
         )
 
     elif step == "order":
@@ -111,9 +127,8 @@ def handle(message):
             ADMIN_ID,
             f"📦 Новый заказ\n\n"
             f"UserID: {message.chat.id}\n"
-            f"👤 {users[message.chat.id]['name']}\n"
-            f"📍 {users[message.chat.id]['address']}\n"
-            f"📞 {users[message.chat.id]['phone']}\n\n"
+            f"Имя: {users[message.chat.id]['name']}\n"
+            f"Телефон: {users[message.chat.id]['phone']}\n\n"
             f"Заказ:\n{message.text}"
         )
 
@@ -125,7 +140,7 @@ def handle(message):
 
             bot.send_message(
                 message.chat.id,
-                "📭 У вас пока нет заказов."
+                "У вас нет заказов 📭"
             )
 
         else:
@@ -143,49 +158,25 @@ def handle(message):
 
         bot.send_message(
             message.chat.id,
-            "💬 Служба поддержки\n\n"
-            "✉️ Отправьте ваш вопрос.\n"
-            "Наши операторы ответят вам в ближайшее время ⏳"
+            "Напишите ваш вопрос ✉️"
         )
 
     elif step == "support":
 
         bot.send_message(
             message.chat.id,
-            "✅ Ваш вопрос отправлен. Оператор скоро ответит."
+            "Ваш вопрос отправлен оператору ✅"
         )
 
         bot.send_message(
             ADMIN_ID,
             f"💬 Новый вопрос\n\n"
             f"UserID: {message.chat.id}\n"
-            f"👤 {users[message.chat.id]['name']}\n"
-            f"📞 {users[message.chat.id]['phone']}\n\n"
-            f"❓ {message.text}"
+            f"Имя: {users[message.chat.id]['name']}\n"
+            f"Телефон: {users[message.chat.id]['phone']}\n\n"
+            f"Вопрос:\n{message.text}"
         )
 
         users[message.chat.id]["step"] = "menu"
-
-
-@bot.message_handler(func=lambda message: message.chat.id == ADMIN_ID)
-def admin_reply(message):
-
-    if message.reply_to_message:
-
-        text = message.reply_to_message.text
-
-        if "UserID:" in text:
-
-            user_id = int(text.split("UserID:")[1].split("\n")[0])
-
-            bot.send_message(
-                user_id,
-                f"💬 Ответ оператора:\n\n{message.text}"
-            )
-
-            bot.send_message(
-                ADMIN_ID,
-                "✅ Ответ отправлен клиенту."
-            )
 
 bot.infinity_polling()
